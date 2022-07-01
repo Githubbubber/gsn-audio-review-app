@@ -7,49 +7,65 @@ const bp = require('body-parser');
 
 require('dotenv').config();
 
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bp.json());
 app.use(bp.urlencoded({ extended: true }));
 
+const dataForProd = {
+  "creation_datetime": "2022-03-23T21:37:22.000Z",
+  "file_directory": "media/audio",
+  "file_name": "t.mp3",
+  "media_deleted_on": null,
+  "media_desc": "The file t.mp3 is an audio track that is the current GSN theme song.",
+  "media_id": 1,
+  "media_last_retrieved": null,
+  "media_type": "audio",
+  "media_updated_on": null,
+  "media_uploaded_on": "2022-06-10T19:11:53.000Z",
+  "project_name": "t.mp3",
+  "read_datetime": null,
+  "thumb_rating": "up",
+  "thumb_rating_id": 1,
+  "totalNotesFromServer": [
+    {
+      "note_body": "The whole track is great. Thanks, Lance.",
+      "note_id": 12,
+      "note_is_deleted": "no",
+      "note_last_retrieved": "2022-06-10T20:11:53.000Z",
+      "note_last_updated": null,
+      "note_timestamp": "14.25"
+    }
+  ],
+  "update_datetime": null,
+  "user_id": 1
+};
+
+const allowList = ['http://localhost:3000', 'http://localhost:3001', 'https://intense-forest-28148.herokuapp.com/'];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    console.log("** Origin of request " + origin);
+
+    if (allowList.indexOf(origin) !== -1 || !origin) {
+      console.log("Origin acceptable");
+      callback(null, true);
+    } else {
+      console.log("Origin rejected");
+      callback(new Error("Not allowed by CORS"));
+    }
+  }
+};
+
+app.use(cors(corsOptions));
+
 const isProduction = process.env.NODE_ENV === "production";
 
 if (isProduction) {
-  app.use(express.static("/client/build"));
-  app.get("/usingle/:media_id", (req, res) => {
-    res.send({
-      "creation_datetime": "2022-03-23T21:37:22.000Z",
-      "file_directory": "media/audio",
-      "file_name": "t.mp3",
-      "media_deleted_on": null,
-      "media_desc": "The file t.mp3 is an audio track that is the current GSN theme song.",
-      "media_id": 1,
-      "media_last_retrieved": null,
-      "media_type": "audio",
-      "media_updated_on": null,
-      "media_uploaded_on": "2022-06-10T19:11:53.000Z",
-      "project_name": "t.mp3",
-      "read_datetime": null,
-      "thumb_rating": "up",
-      "thumb_rating_id": 1,
-      "totalNotesFromServer": [
-        {
-          "note_body": "The whole track is great. Thanks, Lance.",
-          "note_id": 12,
-          "note_is_deleted": "no",
-          "note_last_retrieved": "2022-06-10T20:11:53.000Z",
-          "note_last_updated": null,
-          "note_timestamp": "14.25"
-        }
-      ],
-      "update_datetime": null,
-      "user_id": 1
-    });
-  });
-
+  app.use(express.static(path.join(__dirname, "client/build")));
+  
   app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
+    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
   });
 } else {
   app.use(express.static(path.join(__dirname, 'client', 'public')));
